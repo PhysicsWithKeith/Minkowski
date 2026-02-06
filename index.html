@@ -26,7 +26,7 @@
     </div>
     <div class="control-group">
         <label>Reference Frame</label>
-        <button id="toggleFrame">Active: Stationary (S)</button>
+        <button id="toggleFrame">Active: Events stationary (S)</button>
     </div>
     <div class="control-group">
         <label>Visual Overlays</label>
@@ -113,7 +113,7 @@
 
     toggleFrameBtn.onclick = () => {
         isPrimedActive = !isPrimedActive;
-        toggleFrameBtn.innerText = isPrimedActive ? "Active: Moving (S')" : "Active: Stationary (S)";
+        toggleFrameBtn.innerText = isPrimedActive ? "Active: Events moving (S')" : "Active: Events stationary (S)";
         toggleFrameBtn.classList.toggle('active-mode', isPrimedActive);
     };
 
@@ -219,6 +219,7 @@
 </body>
 
 </html>
+
 
 
 
