@@ -34,7 +34,7 @@
             <label style="font-size: 0.75rem;"><input type="checkbox" id="checkLight" checked> Light Lines (Yellow)</label>
             <label style="font-size: 0.75rem;"><input type="checkbox" id="checkSimul" unchecked> Parallel Simultaneity (Cyan)</label>
             <label style="font-size: 0.75rem;"><input type="checkbox" id="checkWorld" unchecked> Parallel Geodesics (Green)</label>
-            <label style="font-size: 0.75rem;"><input type="checkbox" id="checkStationaryGrid" unchecked> Stationary reference frame (White)</label>
+            <label style="font-size: 0.75rem;"><input type="checkbox" id="checkStationaryGrid" checked> Stationary reference frame (White)</label>
             <label style="font-size: 0.75rem;"><input type="checkbox" id="checkMovingGrid" unchecked> Moving reference frame (Magenta)</label>
             
         </div>
@@ -51,7 +51,7 @@
 <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const vSlider = document.getElementById('vSlider');
+    const vSlider = -document.getElementById('vSlider');
     const vLabel = document.getElementById('vLabel');
     const toggleFrameBtn = document.getElementById('toggleFrame');
     
@@ -161,11 +161,11 @@
 
         if (!isPrimedActive) {
             // Stationary frame is the grid base. Moving frame warps relative to it (+v).
-            drawGrid(-v, '#ff00ff', false); 
+            if (checkMovingGrid.checked) {drawGrid(-v, '#ff00ff', false);}
             if (checkStationaryGrid.checked) {drawGrid(0, '#ffffff', true);}
         } else {
             // Moving frame is the grid base. Stationary frame warps relative to it (-v).
-            drawGrid(v, '#ff00ff', false); 
+            if (checkMovingGrid.checked) {drawGrid(v, '#ff00ff', false);}
             if (checkStationaryGrid.checked) {drawGrid(0, '#ffffff', true);}   
         }
 
@@ -219,4 +219,5 @@
 </body>
 
 </html>
+
 
