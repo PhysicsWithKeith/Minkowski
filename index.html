@@ -186,16 +186,12 @@
 
             // Parallel overlays: They must match the warp of the "other" frame
             const range = 25;
-// Parallel overlays: They must match the warp of the "other" frame
-            const range = 25;
-            // If S is active, overlays are for S (unwarped). If S' is active, they warp relative to S'.
-            const otherVel = isPrimedActive ? -v : 0; 
+            const otherVel = isPrimedActive ? -v : v;
 
             if (document.getElementById('checkSimul').checked) {
                 ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; ctx.lineWidth = 4;
                 ctx.beginPath();
-                // We use otherVel to determine if the line should be slanted or horizontal
-                const s1 = lorentz(-range, 0, otherVel); const s2 = lorentz(range, 0, otherVel);
+                const s1 = lorentz(-range, 0, -otherVel); const s2 = lorentz(range, 0, -otherVel);
                 ctx.moveTo(sx + s1.x * scale, sy - s1.t * scale); ctx.lineTo(sx + s2.x * scale, sy - s2.t * scale);
                 ctx.stroke();
             }
@@ -203,10 +199,11 @@
             if (document.getElementById('checkWorld').checked) {
                 ctx.strokeStyle = 'rgba(0, 255, 100, 0.6)'; ctx.lineWidth = 4;
                 ctx.beginPath();
-                const w1 = lorentz(0, -range, otherVel); const w2 = lorentz(0, range, otherVel);
+                const w1 = lorentz(0, -range, -otherVel); const w2 = lorentz(0, range, -otherVel);
                 ctx.moveTo(sx + w1.x * scale, sy - w1.t * scale); ctx.lineTo(sx + w2.x * scale, sy - w2.t * scale);
                 ctx.stroke();
             }
+
             ctx.fillStyle = "#fff"; ctx.font = "bold 14px Arial";
             ctx.fillText(` E${i+1}`, sx + 12, sy - 12);
             eventStr += `E${i+1}: [${pos.x.toFixed(2)} ly, ${pos.t.toFixed(2)} y]<br>`;
