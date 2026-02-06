@@ -162,11 +162,11 @@
         if (!isPrimedActive) {
             // Stationary frame is the grid base. Moving frame warps relative to it (+v).
             drawGrid(-v, '#ff00ff', false); 
-            drawGrid(0, '#ffffff', true);  
+            if (checkStationaryGrid.checked) {drawGrid(0, '#ffffff', true);}
         } else {
             // Moving frame is the grid base. Stationary frame warps relative to it (-v).
             drawGrid(v, '#ff00ff', false); 
-            drawGrid(0, '#ffffff', true);   
+            if (checkStationaryGrid.checked) {drawGrid(0, '#ffffff', true);}   
         }
 
         // Light Line (Yellow) - Always 45 degrees
@@ -219,3 +219,4 @@
 </body>
 
 </html>
+
