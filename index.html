@@ -51,7 +51,7 @@
 <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const vSlider = -document.getElementById('vSlider');
+    const vSlider = document.getElementById('vSlider');
     const vLabel = document.getElementById('vLabel');
     const toggleFrameBtn = document.getElementById('toggleFrame');
     
@@ -75,8 +75,8 @@
     function lorentz(x, t, vel) {
         const gamma = 1 / Math.sqrt(1 - vel * vel);
         return {
-            x: gamma * (x - vel * t),
-            t: gamma * (t - vel * x)
+            x: gamma * (x + vel * t),
+            t: gamma * (t + vel * x)
         };
     }
 
@@ -219,5 +219,6 @@
 </body>
 
 </html>
+
 
 
