@@ -21,7 +21,7 @@
 
 <div id="ui">
     <div class="control-group">
-        <label>Velocity ($v/c$): <span id="vLabel" class="val">0.00</span></label>
+        <label>Velocity (v/c): <span id="vLabel" class="val">0.00</span></label>
         <input type="range" id="vSlider" min="-0.99" max="0.99" step="0.01" value="0.00">
     </div>
     <div class="control-group">
@@ -34,6 +34,9 @@
             <label style="font-size: 0.75rem;"><input type="checkbox" id="checkLight" checked> Light Lines (Yellow)</label>
             <label style="font-size: 0.75rem;"><input type="checkbox" id="checkSimul" unchecked> Parallel Simultaneity (Cyan)</label>
             <label style="font-size: 0.75rem;"><input type="checkbox" id="checkWorld" unchecked> Parallel Geodesics (Green)</label>
+            <label style="font-size: 0.75rem;"><input type="checkbox" id="checkStationaryGrid" unchecked> Stationary reference frame (White)</label>
+            <label style="font-size: 0.75rem;"><input type="checkbox" id="checkMovingGrid" unchecked> Moving reference frame (Magenta)</label>
+            
         </div>
     </div>
     <div class="control-group">
@@ -214,4 +217,5 @@
     update();
 </script>
 </body>
+
 </html>
