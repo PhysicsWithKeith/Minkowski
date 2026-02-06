@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minkowski Spacetime - Corrected Scissors Warp</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        #ui { background: #1a1a1a; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; border-bottom: 2px solid #333; z-index: 10; }
+        .control-group { display: flex; flex-direction: column; gap: 10px; }
+        canvas { flex-grow: 1; cursor: crosshair; }
+        label { font-size: 0.9rem; color: #fff; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        span.val { color: #00ffcc; font-size: 1.1rem; }
+        button { background: #333; color: white; border: 2px solid #555; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        button:hover { border-color: #00ffcc; background: #444; }
+        button.active-mode { border-color: #ff00ff; background: #300030; }
+        .event-info { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.85); padding: 15px; border: 2px solid #00ffcc; font-family: 'Courier New', monospace; pointer-events: none; border-radius: 8px; min-width: 250px; }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <div class="control-group">
+        <label>Velocity ($v/c$): <span id="vLabel" class="val">0.00</span></label>
+        <input type="range" id="vSlider" min="-0.99" max="0.99" step="0.01" value="0.00">
+    </div>
+    <div class="control-group">
+        <label>Reference Frame</label>
+        <button id="toggleFrame">Active: Stationary (S)</button>
+    </div>
+    <div class="control-group">
+        <label>Visual Overlays</label>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 0.75rem;"><input type="checkbox" id="checkLight" checked> Light Lines (Yellow)</label>
+            <label style="font-size: 0.75rem;"><input type="checkbox" id="checkSimul" unchecked> Parallel Simultaneity (Cyan)</label>
+            <label style="font-size: 0.75rem;"><input type="checkbox" id="checkWorld" unchecked> Parallel Geodesics (Green)</label>
+        </div>
+    </div>
+    <div class="control-group">
+        <label>Actions</label>
+        <button onclick="events = []" style="color: #ffaa00;">Clear All</button>
+    </div>
+</div>
+
+<div class="event-info" id="eventBox">Click to add/remove events (Max 4)</div>
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const vSlider = document.getElementById('vSlider');
+    const vLabel = document.getElementById('vLabel');
+    const toggleFrameBtn = document.getElementById('toggleFrame');
+    
+    let width, height;
+    let v = 0.5;
+    let isPrimedActive = false; 
+    let events = []; // Internal: Always stored as [x, t] in the Stationary Frame (S)
+    const scale = 60;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight - document.getElementById('ui').offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    /**
+     * Lorentz Boost: 
+     * To get S' from S: x' = gamma(x - vt), t' = gamma(t - vx)
+     */
+    function lorentz(x, t, vel) {
+        const gamma = 1 / Math.sqrt(1 - vel * vel);
+        return {
+            x: gamma * (x - vel * t),
+            t: gamma * (t - vel * x)
+        };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = (e.clientX - width/2) / scale;
+        const clickT = -(e.clientY - rect.top - height/2) / scale;
+
+        // Current view coordinate -> S coordinate mapping
+        let sX, sT;
+        if (isPrimedActive) {
+            // We are looking at S' unwarped. To find where that is in S, we use -v.
+            const back = lorentz(clickX, clickT, -v);
+            sX = back.x; sT = back.t;
+        } else {
+            sX = clickX; sT = clickT;
+        }
+
+        // Hit detection in the current visual space
+        let clickedIdx = -1;
+        events.forEach((ev, i) => {
+            const currentPos = isPrimedActive ? lorentz(ev.x, ev.t, v) : ev;
+            const dx = currentPos.x - clickX;
+            const dt = currentPos.t - clickT;
+            if (Math.sqrt(dx*dx + dt*dt) < 0.3) clickedIdx = i;
+        });
+
+        if (clickedIdx !== -1) {
+            events.splice(clickedIdx, 1);
+        } else if (events.length < 4) {
+            events.push({x: sX, t: sT});
+        }
+    });
+
+    toggleFrameBtn.onclick = () => {
+        isPrimedActive = !isPrimedActive;
+        toggleFrameBtn.innerText = isPrimedActive ? "Active: Moving (S')" : "Active: Stationary (S)";
+        toggleFrameBtn.classList.toggle('active-mode', isPrimedActive);
+    };
+
+    function toScreen(x, t) {
+        return [width / 2 + x * scale, height / 2 - t * scale];
+    }
+
+    function drawGrid(vel, color, isBold) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isBold ? 2.5 : 1.5;
+        const range = 15;
+        ctx.beginPath();
+        
+        // Lines of constant X (Worldlines)
+        for (let i = -range; i <= range; i++) {
+            const p1 = lorentz(i, -range, vel);
+            const p2 = lorentz(i, range, vel);
+            ctx.moveTo(...toScreen(p1.x, p1.t));
+            ctx.lineTo(...toScreen(p2.x, p2.t));
+        }
+        // Lines of constant T (Simultaneity)
+        for (let i = -range; i <= range; i++) {
+            const p1 = lorentz(-range, i, vel);
+            const p2 = lorentz(range, i, vel);
+            ctx.moveTo(...toScreen(p1.x, p1.t));
+            ctx.lineTo(...toScreen(p2.x, p2.t));
+        }
+        ctx.stroke();
+
+        // Major Axes
+        ctx.lineWidth = isBold ? 5 : 3;
+        ctx.beginPath();
+        const xAxis1 = lorentz(-range, 0, vel); const xAxis2 = lorentz(range, 0, vel);
+        ctx.moveTo(...toScreen(xAxis1.x, xAxis1.t)); ctx.lineTo(...toScreen(xAxis2.x, xAxis2.t));
+        const tAxis1 = lorentz(0, -range, vel); const tAxis2 = lorentz(0, range, vel);
+        ctx.moveTo(...toScreen(tAxis1.x, tAxis1.t)); ctx.lineTo(...toScreen(tAxis2.x, tAxis2.t));
+        ctx.stroke();
+    }
+
+    function update() {
+        v = parseFloat(vSlider.value);
+        vLabel.innerText = v.toFixed(2);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, width, height);
+
+        if (!isPrimedActive) {
+            // Stationary frame is the grid base. Moving frame warps relative to it (+v).
+            drawGrid(-v, '#ff00ff', false); 
+            drawGrid(0, '#ffffff', true);  
+        } else {
+            // Moving frame is the grid base. Stationary frame warps relative to it (-v).
+            drawGrid(v, '#ff00ff', false); 
+            drawGrid(0, '#ffffff', true);   
+        }
+
+        // Light Line (Yellow) - Always 45 degrees
+        if (document.getElementById('checkLight').checked) {
+            ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(...toScreen(-20, -20)); ctx.lineTo(...toScreen(20, 20));
+            ctx.moveTo(...toScreen(20, -20)); ctx.lineTo(...toScreen(-20, 20));
+            ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        let eventStr = "<b style='color:#0ff'>Observer Coords:</b><br>";
+        events.forEach((ev, i) => {
+            // Transform event to current active perspective
+            const pos = isPrimedActive ? lorentz(ev.x, ev.t, v) : ev;
+            const [sx, sy] = toScreen(pos.x, pos.t);
+            
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath(); ctx.arc(sx, sy, 8, 0, Math.PI * 2); ctx.fill();
+
+            // Parallel overlays: They must match the warp of the "other" frame
+            const range = 25;
+// Parallel overlays: They must match the warp of the "other" frame
+            const range = 25;
+            // If S is active, overlays are for S (unwarped). If S' is active, they warp relative to S'.
+            const otherVel = isPrimedActive ? -v : 0; 
+
+            if (document.getElementById('checkSimul').checked) {
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; ctx.lineWidth = 4;
+                ctx.beginPath();
+                // We use otherVel to determine if the line should be slanted or horizontal
+                const s1 = lorentz(-range, 0, otherVel); const s2 = lorentz(range, 0, otherVel);
+                ctx.moveTo(sx + s1.x * scale, sy - s1.t * scale); ctx.lineTo(sx + s2.x * scale, sy - s2.t * scale);
+                ctx.stroke();
+            }
+
+            if (document.getElementById('checkWorld').checked) {
+                ctx.strokeStyle = 'rgba(0, 255, 100, 0.6)'; ctx.lineWidth = 4;
+                ctx.beginPath();
+                const w1 = lorentz(0, -range, otherVel); const w2 = lorentz(0, range, otherVel);
+                ctx.moveTo(sx + w1.x * scale, sy - w1.t * scale); ctx.lineTo(sx + w2.x * scale, sy - w2.t * scale);
+                ctx.stroke();
+            }
+            ctx.fillStyle = "#fff"; ctx.font = "bold 14px Arial";
+            ctx.fillText(` E${i+1}`, sx + 12, sy - 12);
+            eventStr += `E${i+1}: [${pos.x.toFixed(2)} ly, ${pos.t.toFixed(2)} y]<br>`;
+        });
+        document.getElementById('eventBox').innerHTML = eventStr;
+        requestAnimationFrame(update);
+    }
+    update();
+</script>
+</body>
+</html>
